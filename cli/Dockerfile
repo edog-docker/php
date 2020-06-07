@@ -52,8 +52,9 @@ RUN apk add --no-cache g++ \
     && docker-php-ext-enable swoole \
     && apk del g++
 
-RUN sed -i 's/rm -rf "$dir"/rm -rf "$dir/*"\n        ls -al "$dir"/' $(which docker-php-source); \
-    apk add --no-cache libxml2-dev libzip-dev; \
+# BUG: 进行‘rm -rf’操作会造成目录不为空的错误，“Storage Driver”的问题
+# RUN sed -i 's/rm -rf "$dir"/rm -rf "$dir/*"\n        ls -al "$dir"/' $(which docker-php-source); \
+RUN apk add --no-cache libxml2-dev libzip-dev; \
     docker-php-ext-install -j$(nproc) bcmath \
     pdo_mysql \
     mysqli \
