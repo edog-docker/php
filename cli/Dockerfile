@@ -52,6 +52,11 @@ RUN apk add --no-cache g++ \
     && docker-php-ext-enable swoole \
     && apk del g++
 
+RUN apk add --no-cache gcc \
+    && pecl install inotify \
+    && docker-php-ext-enable inotify \
+    && apk del gcc
+
 # BUG: 进行‘rm -rf’操作会造成目录不为空的错误，“Storage Driver”的问题
 # RUN sed -i 's/rm -rf "$dir"/rm -rf "$dir/*"\n        ls -al "$dir"/' $(which docker-php-source); \
 RUN apk add --no-cache libxml2-dev libzip-dev; \
@@ -62,6 +67,11 @@ RUN apk add --no-cache libxml2-dev libzip-dev; \
     tokenizer \
     zip \
     opcache; \
+    pcntl; \
     echo 'ok';
+
+RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"; \
+    php composer-setup.php --install-dir=/usr/local/bin --filename=composer; \
+    php -r "unlink('composer-setup.php');";
 
 EXPOSE 9501 9502 9503

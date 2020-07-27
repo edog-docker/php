@@ -49,6 +49,11 @@ RUN apk add --no-cache gcc \
     && docker-php-ext-enable mongodb \
     && apk del gcc
 
+RUN apk add --no-cache gcc \
+    && pecl install inotify \
+    && docker-php-ext-enable inotify \
+    && apk del gcc
+
 # tac $(which docker-php-ext-install) | sed '1,3d' | tac > $(which docker-php-ext-install); \
 # sed -i 's/rm -rf/cd \/usr\/src\n                ls -al/' $(which docker-php-source); \
 
@@ -62,6 +67,11 @@ RUN apk add --no-cache libxml2-dev libzip-dev; \
     tokenizer \
     zip \
     opcache; \
+    pcntl; \
     echo 'ok';
+
+RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"; \
+    php composer-setup.php --install-dir=/usr/local/bin --filename=composer; \
+    php -r "unlink('composer-setup.php');";
 
 EXPOSE 9000
