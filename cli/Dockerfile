@@ -11,7 +11,7 @@ RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"; \
     php -v;
 
 RUN apk upgrade --update \
-    && apk add --no-cache \
+    && apk add --no-cache --virtual .php-deps \
     autoconf \
     libc-dev \
     make \
@@ -20,58 +20,52 @@ RUN apk upgrade --update \
     bison \
     libtool \
     zlib-dev \
-    && rm -rf /var/cache/apk/*
+    libmemcached-dev \
+    libmcrypt-dev \
+    yaml-dev \
+    libxml2-dev \
+    libzip-dev \
+    icu-dev \
+    libpng-dev \
+    libxslt-dev \
+    && rm -rf /tmp/* /var/cache/apk/*
 
-RUN apk add --no-cache gcc libmemcached-dev \
+RUN apk add --no-cache --virtual .build-deps gcc g++ \
     && pecl install memcached \
     && docker-php-ext-enable memcached \
-    && apk del gcc
-
-RUN apk add --no-cache gcc libmcrypt-dev \
     && pecl install mcrypt \
     && docker-php-ext-enable mcrypt \
-    && apk del gcc
-
-RUN apk add --no-cache gcc \
     && pecl install redis \
     && docker-php-ext-enable redis \
-    && apk del gcc
-
-RUN apk add --no-cache gcc yaml-dev \
     && pecl install yaml \
     && docker-php-ext-enable yaml \
-    && apk del gcc
-
-RUN apk add --no-cache gcc \
     && pecl install mongodb \
     && docker-php-ext-enable mongodb \
-    && apk del gcc
-
-RUN apk add --no-cache g++ \
-    && pecl install swoole \
-    && docker-php-ext-enable swoole \
-    && apk del g++
-
-RUN apk add --no-cache gcc \
     && pecl install inotify \
     && docker-php-ext-enable inotify \
-    && apk del gcc
+    && pecl install swoole \
+    && docker-php-ext-enable swoole \
+    && apk del .build-deps gcc g++ \
+    && rm -rf /tmp/* /var/cache/apk/*
 
-# BUG: 进行‘rm -rf’操作会造成目录不为空的错误，“Storage Driver”的问题
-# RUN sed -i 's/rm -rf "$dir"/rm -rf "$dir/*"\n        ls -al "$dir"/' $(which docker-php-source); \
-RUN apk add --no-cache libxml2-dev libzip-dev; \
-    docker-php-ext-install -j$(nproc) bcmath \
+RUN docker-php-ext-configure intl \
+    && docker-php-ext-install -j$(nproc) intl \
+    && docker-php-ext-enable intl
+
+RUN docker-php-ext-install -j$(nproc) bcmath \
     pdo_mysql \
     mysqli \
     xmlrpc \
     tokenizer \
     zip \
-    opcache; \
-    pcntl; \
-    echo 'ok';
+    opcache \
+    pcntl \
+    gd \
+    soap \
+    xsl
 
 RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"; \
     php composer-setup.php --install-dir=/usr/local/bin --filename=composer; \
     php -r "unlink('composer-setup.php');";
 
-EXPOSE 9501 9502 9503
+EXPOSE 9000-9050
